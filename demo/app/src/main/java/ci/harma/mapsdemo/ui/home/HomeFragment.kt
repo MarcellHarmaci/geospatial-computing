@@ -10,17 +10,18 @@ import androidx.lifecycle.ViewModelProvider
 import ci.harma.mapsdemo.databinding.FragmentHomeBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
-
-	private var _binding: FragmentHomeBinding? = null
+	private var mapView: MapView? = null
 
 	// This property is only valid between onCreateView and
 	// onDestroyView.
 	private val binding get() = _binding!!
+	private var _binding: FragmentHomeBinding? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -37,10 +38,22 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 			textView.text = it
 		}
 
+		mapView = binding.mapView
 		binding.mapView.onCreate(savedInstanceState)
 		binding.mapView.getMapAsync(this)
 
 		return root
+	}
+
+	override fun onMapReady(map: GoogleMap) {
+		val sydney = LatLng(-34.0, 151.0)
+
+		map.addMarker(
+			MarkerOptions()
+				.position(sydney)
+				.title("Marker in Sydney")
+		)
+		map.moveCamera(CameraUpdateFactory.newLatLng(sydney))
 	}
 
 	override fun onDestroyView() {
@@ -48,14 +61,23 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		_binding = null
 	}
 
-	override fun onMapReady(googleMap: GoogleMap) {
-		val sydney = LatLng(-34.0, 151.0)
+	override fun onResume() {
+		mapView?.onResume()
+		super.onResume()
+	}
 
-		googleMap.addMarker(
-			MarkerOptions()
-				.position(sydney)
-				.title("Marker in Sydney")
-		)
-		googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+	override fun onPause() {
+		mapView?.onPause()
+		super.onPause()
+	}
+
+	override fun onDestroy() {
+		mapView?.onDestroy()
+		super.onDestroy()
+	}
+
+	override fun onLowMemory() {
+		mapView?.onLowMemory()
+		super.onLowMemory()
 	}
 }
