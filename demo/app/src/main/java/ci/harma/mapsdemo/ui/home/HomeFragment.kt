@@ -2,7 +2,9 @@ package ci.harma.mapsdemo.ui.home
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,18 +16,21 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import ci.harma.mapsdemo.databinding.FragmentHomeBinding
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Marker
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
-	private lateinit var locationProvider: FusedLocationProviderClient
 	private var mapView: MapView? = null
+	private lateinit var googleMap: GoogleMap
+	private var locationProvider: FusedLocationProviderClient? = null
+
+	private var lastLocation: Location? = null
+	private var currLocationMarker: Marker? = null
 
 	// This property is only valid between onCreateView and
 	// onDestroyView.
@@ -51,28 +56,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		binding.mapView.onCreate(savedInstanceState)
 		binding.mapView.getMapAsync(this)
 
-		val permissionsGranted = checkPermissions()
-		if (permissionsGranted) {
-			initLocationProvider()
-			getLastLocation()
-		}
-
 		return root
-	}
-
-	private fun initLocationProvider() {
-		activity?.let {
-			locationProvider = LocationServices.getFusedLocationProviderClient(it)
-		}
-	}
-
-	private fun getLastLocation() {
-		locationProvider.lastLocation.addOnSuccessListener { location ->
-			val altitude = location?.altitude
-			val latitude = location?.latitude
-			val accuracy = location?.accuracy
-			Log.d("demo-location", "altitude:$altitude | latitude:$latitude | accuracy:$accuracy")
-		}
 	}
 
 	private fun checkPermissions(): Boolean {
@@ -86,21 +70,15 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 				android.Manifest.permission.ACCESS_COARSE_LOCATION
 			)
 
-			if (fineLocationPermission == PackageManager.PERMISSION_GRANTED
-				|| coarseLocationPermission == PackageManager.PERMISSION_GRANTED
-			) {
-				return true
-			} else {
-				requestPermissions()
-				return false
-			}
+			return (fineLocationPermission == PackageManager.PERMISSION_GRANTED
+					&& coarseLocationPermission == PackageManager.PERMISSION_GRANTED)
 		}
 
 		return false
 	}
 
 	private fun requestPermissions() {
-		requestPermissionLauncher.launch(
+		permissionRequestLauncher.launch(
 			arrayOf(
 				android.Manifest.permission.ACCESS_FINE_LOCATION,
 				android.Manifest.permission.ACCESS_COARSE_LOCATION
@@ -108,7 +86,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		)
 	}
 
-	private val requestPermissionLauncher =
+	private val permissionRequestLauncher =
 		registerForActivityResult(
 			ActivityResultContracts.RequestMultiplePermissions()
 		) { results ->
@@ -116,6 +94,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 
 			if (permissionsGranted) {
 				initLocationProvider()
+				subscribeToLocationUpdates()
 			} else {
 				Toast.makeText(
 					context,
@@ -125,15 +104,58 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 			}
 		}
 
-	override fun onMapReady(map: GoogleMap) {
-		val sydney = LatLng(-34.0, 151.0)
+	private fun initLocationProvider() {
+		activity?.let {
+			locationProvider = LocationServices.getFusedLocationProviderClient(it)
+		}
+	}
 
-		map.addMarker(
-			MarkerOptions()
-				.position(sydney)
-				.title("Marker in Sydney")
+	override fun onMapReady(map: GoogleMap) {
+		googleMap = map
+		googleMap.moveCamera(CameraUpdateFactory.zoomBy(16.0F))
+
+		if (checkPermissions()) {
+			subscribeToLocationUpdates()
+		} else {
+			requestPermissions()
+		}
+	}
+
+	@SuppressLint("MissingPermission")
+	/**
+	 * Should only be called when checkPermissions() == true
+	 */
+	private fun subscribeToLocationUpdates() {
+		val mLocationRequest = LocationRequest()
+		mLocationRequest.interval = 1000 // two minute interval
+		mLocationRequest.fastestInterval = 1000
+		mLocationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+
+		//Location Permission already granted
+		locationProvider?.requestLocationUpdates(
+			mLocationRequest,
+			locationCallback,
+			Looper.myLooper()
 		)
-		map.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+		googleMap.isMyLocationEnabled = true
+	}
+
+	private val locationCallback: LocationCallback = object : LocationCallback() {
+		override fun onLocationResult(locationResult: LocationResult) {
+			super.onLocationResult(locationResult)
+
+			val locationList = locationResult.locations
+			if (locationList.isNotEmpty()) {
+				//The last location in the list is the newest
+				val location = locationList.last()
+				val latLng = LatLng(location.latitude, location.longitude)
+				Log.i("MapsActivity", "Location: " + location.latitude + " " + location.longitude)
+				lastLocation = location
+
+				// move map camera
+				googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+			}
+		}
 	}
 
 	override fun onDestroyView() {
@@ -147,6 +169,10 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 	}
 
 	override fun onPause() {
+		// stop location updates when Activity is no longer active
+		// onMapReady starts location updates again when the map is visible again
+		locationProvider?.removeLocationUpdates(locationCallback)
+
 		mapView?.onPause()
 		super.onPause()
 	}
