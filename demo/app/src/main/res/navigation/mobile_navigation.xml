@@ -3,23 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_home">
+    app:startDestination="@+id/navigation_speed">
 
     <fragment
-        android:id="@+id/navigation_home"
-        android:name="ci.harma.mapsdemo.ui.home.HomeFragment"
-        android:label="@string/title_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/navigation_speed"
+        android:name="ci.harma.mapsdemo.ui.speed.SpeedFragment"
+        android:label="@string/title_speed"
+        tools:layout="@layout/fragment_speed" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="ci.harma.mapsdemo.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_satellites"
+        android:name="ci.harma.mapsdemo.ui.satellites.SatellitesFragment"
+        android:label="@string/title_satellites"
+        tools:layout="@layout/fragment_satellites" />
 
-    <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="ci.harma.mapsdemo.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
 </navigation>

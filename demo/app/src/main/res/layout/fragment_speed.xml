@@ -5,25 +5,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
-
-    <TextView
-        android:id="@+id/text_home"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:background="@android:color/white"
+    tools:context=".ui.speed.SpeedFragment">
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
         app:layout_constraintBaseline_toBottomOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/layoutBottom"
-        app:layout_constraintTop_toBottomOf="@id/text_home"
+        app:layout_constraintTop_toTopOf="parent"
         map:uiRotateGestures="false"
         map:uiTiltGestures="false"
         map:uiZoomControls="true"
@@ -42,6 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/label_speed"
+            android:textColor="@color/black"
             android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -50,6 +42,7 @@
             android:id="@+id/tvSpeed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/black"
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -64,6 +57,7 @@
             app:layout_constraintDimensionRatio="W,1:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="ContentDescription"
             tools:src="@drawable/ic_baseline_arrow_right_alt_24" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

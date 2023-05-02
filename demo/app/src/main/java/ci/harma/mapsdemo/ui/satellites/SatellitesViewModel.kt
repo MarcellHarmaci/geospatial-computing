@@ -1,10 +1,10 @@
-package ci.harma.mapsdemo.ui.dashboard
+package ci.harma.mapsdemo.ui.satellites
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class DashboardViewModel : ViewModel() {
+class SatellitesViewModel : ViewModel() {
 
 	private val _text = MutableLiveData<String>().apply {
 		value = "This is dashboard Fragment"

@@ -1,4 +1,4 @@
-package ci.harma.mapsdemo.ui.home
+package ci.harma.mapsdemo.ui.speed
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -9,7 +9,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -17,15 +16,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import ci.harma.mapsdemo.R
 import ci.harma.mapsdemo.RotationTransformation
-import ci.harma.mapsdemo.databinding.FragmentHomeBinding
+import ci.harma.mapsdemo.databinding.FragmentSpeedBinding
 import ci.harma.mapsdemo.format
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 
-
-class HomeFragment : Fragment(), OnMapReadyCallback {
+class SpeedFragment : Fragment(), OnMapReadyCallback {
 	private var mapView: MapView? = null
 	private lateinit var googleMap: GoogleMap
 	private var locationProvider: FusedLocationProviderClient? = null
@@ -35,22 +33,22 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 	// This property is only valid between onCreateView and
 	// onDestroyView.
 	private val binding get() = _binding!!
-	private var _binding: FragmentHomeBinding? = null
+	private var _binding: FragmentSpeedBinding? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
-		val homeViewModel = ViewModelProvider(this)[HomeViewModel::class.java]
+		val speedViewModel = ViewModelProvider(this)[SpeedViewModel::class.java]
 
-		_binding = FragmentHomeBinding.inflate(inflater, container, false)
+		_binding = FragmentSpeedBinding.inflate(inflater, container, false)
 		val root: View = binding.root
 
-		val textView: TextView = binding.textHome
-		homeViewModel.text.observe(viewLifecycleOwner) {
-			textView.text = it
-		}
+//		val textView: TextView = binding.textHome
+//		speedViewModel.text.observe(viewLifecycleOwner) {
+//			textView.text = it
+//		}
 
 		mapView = binding.mapView
 		binding.mapView.onCreate(savedInstanceState)
@@ -149,13 +147,12 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 
 			val locationList = locationResult.locations
 			if (locationList.isNotEmpty()) {
-				//The last location in the list is the newest
+				//The last location in the list is the most recent
 				val location = locationList.last()
 				val latLng = LatLng(location.latitude, location.longitude)
 
-				Log.d("MapsActivity", "Location: " + location.latitude + " " + location.longitude)
-				Log.d("MapsActivity", "Speed: ${location.speed}")
-				Log.d("MapsActivity", "Bearing: ${location.bearing}")
+				Log.d("SpeedFragment", "Speed: ${location.speed}")
+				Log.d("SpeedFragment", "Bearing: ${location.bearing}")
 				displayLocationInfo()
 
 				lastLocation = location
