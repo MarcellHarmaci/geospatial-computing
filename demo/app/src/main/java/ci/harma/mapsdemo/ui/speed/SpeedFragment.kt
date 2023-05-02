@@ -24,31 +24,31 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 
 class SpeedFragment : Fragment(), OnMapReadyCallback {
+	private lateinit var viewModel: SpeedViewModel
+
 	private var mapView: MapView? = null
 	private lateinit var googleMap: GoogleMap
 	private var locationProvider: FusedLocationProviderClient? = null
-
-	private var lastLocation: Location? = null
 
 	// This property is only valid between onCreateView and
 	// onDestroyView.
 	private val binding get() = _binding!!
 	private var _binding: FragmentSpeedBinding? = null
 
+	@SuppressLint("SetTextI18n")
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
-		val speedViewModel = ViewModelProvider(this)[SpeedViewModel::class.java]
+		viewModel = ViewModelProvider(this)[SpeedViewModel::class.java]
 
 		_binding = FragmentSpeedBinding.inflate(inflater, container, false)
 		val root: View = binding.root
 
-//		val textView: TextView = binding.textHome
-//		speedViewModel.text.observe(viewLifecycleOwner) {
-//			textView.text = it
-//		}
+		viewModel.location.observe(viewLifecycleOwner) {
+			displayLocation(viewModel.location.value)
+		}
 
 		mapView = binding.mapView
 		binding.mapView.onCreate(savedInstanceState)
@@ -120,10 +120,10 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 		}
 	}
 
-	@SuppressLint("MissingPermission")
 	/**
-	 * Should only be called when checkPermissions() == true
+	 * Should only be called when permissions are granted
 	 */
+	@SuppressLint("MissingPermission")
 	private fun subscribeToLocationUpdates() {
 		val mLocationRequest = LocationRequest.Builder(1000)
 			.setPriority(Priority.PRIORITY_HIGH_ACCURACY)
@@ -147,26 +147,20 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 
 			val locationList = locationResult.locations
 			if (locationList.isNotEmpty()) {
-				//The last location in the list is the most recent
-				val location = locationList.last()
-				val latLng = LatLng(location.latitude, location.longitude)
+				// the last location in the list is the most recent
+				val newLocation = locationList.last()
+				viewModel.setLocation(newLocation)
 
-				Log.d("SpeedFragment", "Speed: ${location.speed}")
-				Log.d("SpeedFragment", "Bearing: ${location.bearing}")
-				displayLocationInfo()
-
-				lastLocation = location
-
-				// move map camera
-				googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+				Log.d("SpeedFragment", "Speed: ${newLocation.speed.format(2)} m/s")
+				Log.d("SpeedFragment", "Bearing: ${newLocation.bearing.format(2)} degrees")
 			}
 		}
 	}
 
 	@SuppressLint("SetTextI18n")
-	private fun displayLocationInfo() {
-		val speed: Float = lastLocation?.speed ?: 0F
-		val bearing: Float = lastLocation?.bearing ?: 0F
+	private fun displayLocation(location: Location?) {
+		val speed: Float = location?.speed ?: 0F
+		val bearing: Float = location?.bearing ?: 0F
 
 		binding.tvSpeed.text = "${speed.format(2)} m/s";
 
@@ -175,6 +169,12 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 			.load(R.drawable.ic_baseline_arrow_right_alt_24)
 			.transform(rotationTransformation)
 			.into(binding.ivDirection)
+
+		// move map camera
+		location?.let {
+			val latLng = LatLng(it.latitude, it.longitude)
+			googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+		}
 	}
 
 	override fun onDestroyView() {
