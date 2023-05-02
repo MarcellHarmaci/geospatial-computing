@@ -15,10 +15,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import ci.harma.mapsdemo.R
+import ci.harma.mapsdemo.RotationTransformation
 import ci.harma.mapsdemo.databinding.FragmentHomeBinding
+import ci.harma.mapsdemo.format
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
+
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
 	private var mapView: MapView? = null
@@ -26,18 +31,6 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 	private var locationProvider: FusedLocationProviderClient? = null
 
 	private var lastLocation: Location? = null
-//	private var secondLastLocation: Location? = null
-//	private val vector: Pair<Double, Double>?
-//		get() {
-//			return if (secondLastLocation == null || lastLocation == null) {
-//				null
-//			} else {
-//				Pair(
-//					secondLastLocation!!.latitude - lastLocation!!.latitude,
-//					secondLastLocation!!.longitude - lastLocation!!.longitude
-//				)
-//			}
-//		}
 
 	// This property is only valid between onCreateView and
 	// onDestroyView.
@@ -49,7 +42,6 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
-//		MapsInitializer.initialize(requireContext(), MapsInitializer.Renderer.LATEST) {}
 		val homeViewModel = ViewModelProvider(this)[HomeViewModel::class.java]
 
 		_binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -161,16 +153,31 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 				val location = locationList.last()
 				val latLng = LatLng(location.latitude, location.longitude)
 
-				Log.i("MapsActivity", "Location: " + location.latitude + " " + location.longitude)
-//				Log.i("MapsActivity", "Direction: $vector")
+				Log.d("MapsActivity", "Location: " + location.latitude + " " + location.longitude)
+				Log.d("MapsActivity", "Speed: ${location.speed}")
+				Log.d("MapsActivity", "Bearing: ${location.bearing}")
+				displayLocationInfo()
 
-//				secondLastLocation = lastLocation
 				lastLocation = location
 
 				// move map camera
 				googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
 			}
 		}
+	}
+
+	@SuppressLint("SetTextI18n")
+	private fun displayLocationInfo() {
+		val speed: Float = lastLocation?.speed ?: 0F
+		val bearing: Float = lastLocation?.bearing ?: 0F
+
+		binding.tvSpeed.text = "${speed.format(2)} m/s";
+
+		val rotationTransformation = RotationTransformation(bearing - 90)
+		Glide.with(this)
+			.load(R.drawable.ic_baseline_arrow_right_alt_24)
+			.transform(rotationTransformation)
+			.into(binding.ivDirection)
 	}
 
 	override fun onDestroyView() {
