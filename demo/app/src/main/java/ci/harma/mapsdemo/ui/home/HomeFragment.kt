@@ -123,6 +123,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		googleMap.moveCamera(CameraUpdateFactory.zoomBy(16.0F))
 
 		if (checkPermissions()) {
+			initLocationProvider()
 			subscribeToLocationUpdates()
 		} else {
 			requestPermissions()
