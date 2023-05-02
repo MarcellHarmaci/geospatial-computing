@@ -17,12 +17,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import ci.harma.mapsdemo.databinding.FragmentHomeBinding
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
 	private var mapView: MapView? = null
@@ -30,7 +26,18 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 	private var locationProvider: FusedLocationProviderClient? = null
 
 	private var lastLocation: Location? = null
-	private var currLocationMarker: Marker? = null
+//	private var secondLastLocation: Location? = null
+//	private val vector: Pair<Double, Double>?
+//		get() {
+//			return if (secondLastLocation == null || lastLocation == null) {
+//				null
+//			} else {
+//				Pair(
+//					secondLastLocation!!.latitude - lastLocation!!.latitude,
+//					secondLastLocation!!.longitude - lastLocation!!.longitude
+//				)
+//			}
+//		}
 
 	// This property is only valid between onCreateView and
 	// onDestroyView.
@@ -42,6 +49,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
+//		MapsInitializer.initialize(requireContext(), MapsInitializer.Renderer.LATEST) {}
 		val homeViewModel = ViewModelProvider(this)[HomeViewModel::class.java]
 
 		_binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -126,16 +134,18 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 	 * Should only be called when checkPermissions() == true
 	 */
 	private fun subscribeToLocationUpdates() {
-		val mLocationRequest = LocationRequest()
-		mLocationRequest.interval = 1000 // two minute interval
-		mLocationRequest.fastestInterval = 1000
-		mLocationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+		val mLocationRequest = LocationRequest.Builder(1000)
+			.setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+			.setIntervalMillis(1000)
+			.setMinUpdateIntervalMillis(500)
+			.setWaitForAccurateLocation(true)
+			.build()
 
 		//Location Permission already granted
 		locationProvider?.requestLocationUpdates(
 			mLocationRequest,
 			locationCallback,
-			Looper.myLooper()
+			Looper.getMainLooper()
 		)
 		googleMap.isMyLocationEnabled = true
 	}
@@ -149,7 +159,11 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 				//The last location in the list is the newest
 				val location = locationList.last()
 				val latLng = LatLng(location.latitude, location.longitude)
+
 				Log.i("MapsActivity", "Location: " + location.latitude + " " + location.longitude)
+//				Log.i("MapsActivity", "Direction: $vector")
+
+//				secondLastLocation = lastLocation
 				lastLocation = location
 
 				// move map camera
