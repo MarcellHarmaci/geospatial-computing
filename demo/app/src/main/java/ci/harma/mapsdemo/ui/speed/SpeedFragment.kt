@@ -27,7 +27,7 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 	private lateinit var viewModel: SpeedViewModel
 
 	private var mapView: MapView? = null
-	private lateinit var googleMap: GoogleMap
+	private var googleMap: GoogleMap? = null
 	private var locationProvider: FusedLocationProviderClient? = null
 
 	// This property is only valid between onCreateView and
@@ -91,8 +91,7 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 			val permissionsGranted = results.values.stream().allMatch { it }
 
 			if (permissionsGranted) {
-				initLocationProvider()
-				subscribeToLocationUpdates()
+				initLocationHandling()
 			} else {
 				Toast.makeText(
 					context,
@@ -102,21 +101,28 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 			}
 		}
 
-	private fun initLocationProvider() {
-		activity?.let {
-			locationProvider = LocationServices.getFusedLocationProviderClient(it)
+	override fun onMapReady(map: GoogleMap) {
+		googleMap = map
+		googleMap?.moveCamera(CameraUpdateFactory.zoomBy(16.0F))
+
+		if (checkPermissions()) {
+			initLocationHandling()
+		} else {
+			requestPermissions()
 		}
 	}
 
-	override fun onMapReady(map: GoogleMap) {
-		googleMap = map
-		googleMap.moveCamera(CameraUpdateFactory.zoomBy(16.0F))
+	private fun initLocationHandling() {
+		if (googleMap == null || viewModel.isSubscribedToLocationUpdates) return
 
-		if (checkPermissions()) {
-			initLocationProvider()
-			subscribeToLocationUpdates()
-		} else {
-			requestPermissions()
+		viewModel.isSubscribedToLocationUpdates = true
+		initLocationProvider()
+		subscribeToLocationUpdates()
+	}
+
+	private fun initLocationProvider() {
+		activity?.let {
+			locationProvider = LocationServices.getFusedLocationProviderClient(it)
 		}
 	}
 
@@ -138,7 +144,7 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 			locationCallback,
 			Looper.getMainLooper()
 		)
-		googleMap.isMyLocationEnabled = true
+		googleMap?.isMyLocationEnabled = true
 	}
 
 	private val locationCallback: LocationCallback = object : LocationCallback() {
@@ -173,7 +179,7 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 		// move map camera
 		location?.let {
 			val latLng = LatLng(it.latitude, it.longitude)
-			googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+			googleMap?.moveCamera(CameraUpdateFactory.newLatLng(latLng))
 		}
 	}
 
@@ -185,12 +191,15 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 	override fun onResume() {
 		mapView?.onResume()
 		super.onResume()
+
+		initLocationHandling()
 	}
 
 	override fun onPause() {
 		// stop location updates when Activity is no longer active
 		// onMapReady starts location updates again when the map is visible again
 		locationProvider?.removeLocationUpdates(locationCallback)
+		viewModel.isSubscribedToLocationUpdates = false
 
 		mapView?.onPause()
 		super.onPause()

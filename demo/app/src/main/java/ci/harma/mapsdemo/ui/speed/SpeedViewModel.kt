@@ -13,4 +13,6 @@ class SpeedViewModel : ViewModel() {
 	fun setLocation(location: Location?) {
 		_location.value = location
 	}
+
+	var isSubscribedToLocationUpdates: Boolean = false
 }
