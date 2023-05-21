@@ -5,8 +5,7 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 
 abstract class GoogleMapsFragment : Fragment(), OnMapReadyCallback {
-    private var mapView: MapView? = null
-
+    protected var mapView: MapView? = null
 
     override fun onStart() {
         mapView?.onStart()

@@ -12,8 +12,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import ci.harma.mapsdemo.GoogleMapsFragment
 import ci.harma.mapsdemo.R
 import ci.harma.mapsdemo.RotationTransformation
 import ci.harma.mapsdemo.databinding.FragmentSpeedBinding
@@ -23,10 +23,9 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 
-class SpeedFragment : Fragment(), OnMapReadyCallback {
+class SpeedFragment : GoogleMapsFragment() {
 	private lateinit var viewModel: SpeedViewModel
 
-	private var mapView: MapView? = null
 	private var googleMap: GoogleMap? = null
 	private var locationProvider: FusedLocationProviderClient? = null
 

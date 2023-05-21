@@ -9,18 +9,15 @@ import ci.harma.mapsdemo.GoogleMapsFragment
 import ci.harma.mapsdemo.databinding.FragmentSatellitesBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 class SatellitesFragment : GoogleMapsFragment() {
-	private var mapView: MapView? = null
-
-	private var googleMap: GoogleMap? = null
 	// This property is only valid between onCreateView and
 	// onDestroyView.
 	private val binding get() = _binding!!
 	private var _binding: FragmentSatellitesBinding? = null
+	private var googleMap: GoogleMap? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
