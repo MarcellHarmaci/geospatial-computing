@@ -51,8 +51,8 @@ class SpeedFragment : Fragment(), OnMapReadyCallback {
 		}
 
 		mapView = binding.mapView
-		binding.mapView.onCreate(savedInstanceState)
-		binding.mapView.getMapAsync(this)
+		mapView?.onCreate(savedInstanceState)
+		mapView?.getMapAsync(this)
 
 		return root
 	}
