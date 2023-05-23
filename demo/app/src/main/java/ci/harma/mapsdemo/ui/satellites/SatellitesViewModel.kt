@@ -1,13 +1,10 @@
 package ci.harma.mapsdemo.ui.satellites
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.github.petr_s.nmea.GpsSatellite
 
 class SatellitesViewModel : ViewModel() {
-
-	private val _text = MutableLiveData<String>().apply {
-		value = "This is satellites Fragment"
-	}
-	val text: LiveData<String> = _text
+	val satellites: MutableLiveData<List<GpsSatellite>> =
+		MutableLiveData<List<GpsSatellite>>()
 }

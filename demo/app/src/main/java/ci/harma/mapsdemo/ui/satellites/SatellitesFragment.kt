@@ -18,12 +18,12 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import ci.harma.mapsdemo.R
 import ci.harma.mapsdemo.databinding.FragmentSatellitesBinding
 import ci.harma.mapsdemo.dpToPx
-import ci.harma.mapsdemo.getDrawable
 import ci.harma.mapsdemo.ui.satellites.nmea.EmptyLocationListener
 import ci.harma.mapsdemo.ui.satellites.nmea.MyNMEAHandler
 import ci.harma.mapsdemo.ui.satellites.nmea.NmeaFragment
@@ -33,8 +33,16 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 class SatellitesFragment : NmeaFragment() {
+	private lateinit var viewModel: SatellitesViewModel
+	private val satImages = mutableListOf<ImageView>() // not in VM, because it's view state
+
 	private val binding get() = _binding!!
 	private var _binding: FragmentSatellitesBinding? = null
 
@@ -47,7 +55,7 @@ class SatellitesFragment : NmeaFragment() {
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
-		val viewModel = ViewModelProvider(this)[SatellitesViewModel::class.java]
+		viewModel = ViewModelProvider(this)[SatellitesViewModel::class.java]
 
 		_binding = FragmentSatellitesBinding.inflate(inflater, container, false)
 		val root: View = binding.root
@@ -55,6 +63,23 @@ class SatellitesFragment : NmeaFragment() {
 		mapView = binding.mapView
 		mapView?.onCreate(savedInstanceState)
 		mapView?.getMapAsync(this)
+
+		viewModel.satellites.observe(viewLifecycleOwner) {
+			satImages.forEach { imageView ->
+				binding.root.removeView(imageView)
+			}
+			satImages.clear()
+
+			it.forEach { sat ->
+				val rootSize = measureRootView()
+				val position = calcPosition(
+					rootSize,
+					sat.azimuth
+				)
+				val imageView = addSatelliteImage(position.first, position.second)
+				satImages.add(imageView)
+			}
+		}
 
 		return root
 	}
@@ -144,48 +169,89 @@ class SatellitesFragment : NmeaFragment() {
 	private val satellitesListener = object : MyNMEAHandler.SatellitesListener {
 		override fun onSatellites(satellites: List<GpsSatellite?>?) {
 			Log.d("NMEA-onSatellites", satellites?.toString() ?: "")
-
-			// TODO remove images drawn before
-
-			satellites?.filterNotNull()?.forEach { sat ->
-				val rootSize = measureRootView()
-				val position = calcPosition(rootSize, sat.azimuth)
-				val imageView = createImageView(position.first, position.second)
-				binding.root.addView(imageView)
-			}
+			viewModel.satellites.value = satellites?.filterNotNull() ?: listOf()
 		}
 	}
 
 	private fun measureRootView(): Pair<Int, Int> {
-		binding.root.measure(View.MeasureSpec.EXACTLY, View.MeasureSpec.EXACTLY)
+//		binding.root.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
 		val width = binding.root.measuredWidth
 		val height = binding.root.measuredHeight
 
 		return Pair(width, height)
 	}
 
-	private fun calcPosition(rootSize: Pair<Int, Int>, azimuth: Float):Pair<Int, Int> {
-		val rootWidth: Int = rootSize.first
-		val rootHeight: Int = rootSize.second
+	private fun calcPosition(
+		rootSize: Pair<Int, Int>,
+		azimuth: Float
+	): Pair<Int, Int> {
+		val width = min(rootSize.first, rootSize.second).toDouble()
+		val height = min(rootSize.first, rootSize.second).toDouble()
 
-		// TODO calculate top left coordinates of imageview
-		return Pair(0,0)
+		val centerX = width / 2
+		val centerY = height / 2
+		val azimuthRad = azimuth * PI / 180
+
+		val x: Double
+		val y: Double
+
+		// TODO fix calculation
+		when (azimuth) {
+			in 0.0..90.0 -> {
+				x = centerX + (width / 2) * cos(azimuthRad)
+				y = centerY - (height / 2) * sin(azimuthRad)
+			}
+
+			in 90.0..180.0 -> {
+				val adjustedAngleRad = azimuthRad - PI / 2
+				x = centerX - (width / 2) * sin(adjustedAngleRad)
+				y = centerY - (height / 2) * cos(adjustedAngleRad)
+			}
+
+			in 180.0..270.0 -> {
+				val adjustedAngleRad = azimuthRad - PI
+				x = centerX - (width / 2) * cos(adjustedAngleRad)
+				y = centerY + (height / 2) * sin(adjustedAngleRad)
+			}
+
+			else -> {
+				val adjustedAngleRad = azimuthRad - 3 * PI / 2
+				x = centerX + (width / 2) * sin(adjustedAngleRad)
+				y = centerY + (height / 2) * cos(adjustedAngleRad)
+			}
+		}
+
+		return Pair(x.roundToInt(), y.roundToInt())
 	}
 
-	private fun createImageView(marginLeft: Int, marginTop: Int): ImageView {
-		val imageView = ImageView(requireContext())
-
+	private fun addSatelliteImage(marginLeft: Int, marginTop: Int): ImageView {
 		val layoutParams = ConstraintLayout.LayoutParams(
 			dpToPx(64),
 			dpToPx(64)
 		)
-		layoutParams.startToStart = binding.root.id
-		layoutParams.topToTop = binding.root.id
-		layoutParams.setMargins(marginLeft, marginTop, 0,0)
-		imageView.layoutParams = layoutParams
+		layoutParams.setMargins(marginLeft, marginTop, 0, 0)
 
-		imageView.setImageDrawable(getDrawable(R.drawable.ic_baseline_satellite_alt_24))
+		val imageView = ImageView(requireContext())
+		imageView.layoutParams = layoutParams
+		imageView.id = View.generateViewId()
+		imageView.setImageResource(R.drawable.ic_baseline_satellite_alt_24)
 		imageView.imageTintList = ColorStateList.valueOf(Color.WHITE)
+
+		binding.root.addView(imageView)
+
+		val constraints = ConstraintSet()
+		constraints.clone(binding.root)
+		// startToStartOf="parent"
+		constraints.connect(
+			imageView.id, ConstraintSet.START,
+			ConstraintSet.PARENT_ID, ConstraintSet.START
+		)
+		// topToTopOf="parent"
+		constraints.connect(
+			imageView.id, ConstraintSet.TOP,
+			ConstraintSet.PARENT_ID, ConstraintSet.TOP
+		)
+		constraints.applyTo(binding.root)
 
 		return imageView
 	}
