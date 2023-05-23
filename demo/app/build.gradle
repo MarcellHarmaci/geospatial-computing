@@ -52,9 +52,10 @@ dependencies {
 
     // Glide to display and transform images
     implementation 'com.github.bumptech.glide:glide:4.15.1'
+    implementation project(path: ':android-nmea-parser')
 
     // NMEA parser
-    implementation 'com.github.petr-s:android-nmea-parser:0.5.0'
+//    implementation 'com.github.MarcellHarmaci:android-nmea-parser:f33cae2f6a'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
