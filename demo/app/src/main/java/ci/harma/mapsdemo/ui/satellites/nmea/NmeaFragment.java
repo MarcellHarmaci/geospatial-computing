@@ -1,4 +1,4 @@
-package ci.harma.mapsdemo.ui.satellites;
+package ci.harma.mapsdemo.ui.satellites.nmea;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Context.LOCATION_SERVICE;

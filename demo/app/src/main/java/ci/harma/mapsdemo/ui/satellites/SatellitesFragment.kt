@@ -3,6 +3,8 @@ package ci.harma.mapsdemo.ui.satellites
 import android.Manifest
 import android.content.Context.LOCATION_SERVICE
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.location.OnNmeaMessageListener
@@ -12,13 +14,19 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import ci.harma.mapsdemo.R
 import ci.harma.mapsdemo.databinding.FragmentSatellitesBinding
+import ci.harma.mapsdemo.dpToPx
+import ci.harma.mapsdemo.getDrawable
 import ci.harma.mapsdemo.ui.satellites.nmea.EmptyLocationListener
 import ci.harma.mapsdemo.ui.satellites.nmea.MyNMEAHandler
+import ci.harma.mapsdemo.ui.satellites.nmea.NmeaFragment
 import com.github.petr_s.nmea.GpsSatellite
 import com.github.petr_s.nmea.NMEAParser
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -134,10 +142,52 @@ class SatellitesFragment : NmeaFragment() {
 	}
 
 	private val satellitesListener = object : MyNMEAHandler.SatellitesListener {
-		override fun onSatellites(satellites: MutableList<GpsSatellite>?) {
+		override fun onSatellites(satellites: List<GpsSatellite?>?) {
 			Log.d("NMEA-onSatellites", satellites?.toString() ?: "")
-//			TODO display satellites around the map
+
+			// TODO remove images drawn before
+
+			satellites?.filterNotNull()?.forEach { sat ->
+				val rootSize = measureRootView()
+				val position = calcPosition(rootSize, sat.azimuth)
+				val imageView = createImageView(position.first, position.second)
+				binding.root.addView(imageView)
+			}
 		}
+	}
+
+	private fun measureRootView(): Pair<Int, Int> {
+		binding.root.measure(View.MeasureSpec.EXACTLY, View.MeasureSpec.EXACTLY)
+		val width = binding.root.measuredWidth
+		val height = binding.root.measuredHeight
+
+		return Pair(width, height)
+	}
+
+	private fun calcPosition(rootSize: Pair<Int, Int>, azimuth: Float):Pair<Int, Int> {
+		val rootWidth: Int = rootSize.first
+		val rootHeight: Int = rootSize.second
+
+		// TODO calculate top left coordinates of imageview
+		return Pair(0,0)
+	}
+
+	private fun createImageView(marginLeft: Int, marginTop: Int): ImageView {
+		val imageView = ImageView(requireContext())
+
+		val layoutParams = ConstraintLayout.LayoutParams(
+			dpToPx(64),
+			dpToPx(64)
+		)
+		layoutParams.startToStart = binding.root.id
+		layoutParams.topToTop = binding.root.id
+		layoutParams.setMargins(marginLeft, marginTop, 0,0)
+		imageView.layoutParams = layoutParams
+
+		imageView.setImageDrawable(getDrawable(R.drawable.ic_baseline_satellite_alt_24))
+		imageView.imageTintList = ColorStateList.valueOf(Color.WHITE)
+
+		return imageView
 	}
 
 }

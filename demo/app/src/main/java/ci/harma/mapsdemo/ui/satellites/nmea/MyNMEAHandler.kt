@@ -14,7 +14,7 @@ class MyNMEAHandler(
     }
 
     interface SatellitesListener {
-        fun onSatellites(satellites: MutableList<GpsSatellite>?)
+        fun onSatellites(satellites: List<GpsSatellite?>?)
     }
 
 
@@ -22,7 +22,7 @@ class MyNMEAHandler(
         locationListener?.onLocation(location)
     }
 
-    override fun onSatellites(satellites: MutableList<GpsSatellite>?) {
+    override fun onSatellites(satellites: List<GpsSatellite?>?) {
         satellitesListener?.onSatellites(satellites)
     }
 
