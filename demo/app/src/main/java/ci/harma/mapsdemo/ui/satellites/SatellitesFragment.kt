@@ -195,6 +195,31 @@ class SatellitesFragment : NmeaFragment() {
 		val x: Double
 		val y: Double
 
+		/**
+		 * |---------------------------------|
+		 * |                |                x (X, Y) = ?
+		 * |                |               /|
+		 * |                |  azimuth    /  |
+		 * |                |   angle   /    |
+		 * |                |         /      |
+		 * |                |       /        |
+		 * |                |     /          |
+		 * |                |   /            |
+		 * |                | /              |
+		 * |                x                |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |                                 |
+		 * |---------------------------------|
+		 * Calculate (X, Y), then if it is on the right/bottom side shift it left/up 64 dps
+		 * so the image can fit on the screen.
+		 * The bottom-right 64dp should be shifted both left & up.
+		 */
 		// TODO fix calculation
 		when (azimuth) {
 			in 0.0..90.0 -> {
